@@ -11,6 +11,9 @@ class Api::V1::UsersController < ApplicationController
   # GET /users/1
   # GET /users/1.json
   def show
+    if !@user
+      return render json: {status: -1, notice: '数据不存在'}
+    end
   end
 
   # GET /users/new
@@ -26,34 +29,35 @@ class Api::V1::UsersController < ApplicationController
   # POST /users.json
   def create
     @user = User.new(user_params)
-      if @user.save
-         render json: {status: 1,notice: "创建成功！"}
-      else        
-         render json: {status: -1,notice: "创建失败！"}
+    if @user.save
+      render :show, status: :created, location: @user 
+    else 
+      render json: @user.errors, status: :unprocessable_entity
     end
   end
 
   # PATCH/PUT /users/1
   # PATCH/PUT /users/1.json
   def update
-      if @user.update(user_params)
-         render json: {status: 1,notice: "修改成功！"}
-      else
-         render json: {status: -1,notice: "修改失败！没有找到该用户"}
+    status = @user.update(user_params) rescue false #异常抛出
+      result = {status: 1, notice: '更改成功！'}
+    unless status
+      result = {status: -1, notice: '数据不存在！'}
     end
+      render json: result
   end
 
   # DELETE /users/1
   # DELETE /users/1.json
   def destroy
     status = @user.destroy rescue false
-      result = {status: 1, notice: 'User was successfully destroyed.' }
+      result = {status: 1, notice: '删除成功！' }
       
       unless status
-        result = { status: -1, notice: "User not found"}
+        result = { status: -1, notice: "数据不存在！"}
       end
         render json: result
-    end
+  end
 
   private
   # Use callbacks to share common setup or constraints between actions.
